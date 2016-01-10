@@ -3,7 +3,8 @@
  */
 
 var mainController = require('../controller');
-var adminController = require('./controller');
+var events = require('../constants');
+var Emitter = require('../emitter');
 
 // Constructor with initial state
 function AdminView(options) {
@@ -12,8 +13,8 @@ function AdminView(options) {
 
     // BUTTONS
     this.openBtn = $('button#admin-open');
-    this.cancelBtn = $('button#cancel');
-    this.saveBtn = $('button#save');
+    this.cancelBtn = $('button#admin-cancel');
+    this.saveBtn = $('button#admin-save');
 
     // FORM
     this.formEl = $('form#admin');
@@ -27,26 +28,41 @@ AdminView.prototype = {
     init: function() {
         this.formEl.hide();
         this._setupListeners();
+
+         // event listeners
+        Emitter.subscribe(events.CURRENT_CAT_SET, this, function() {
+            this.render();
+        });
     },
     render: function() {
-        this.formEl.show();
         // populate with current cat data
         var currentCat = mainController.getCurrentCat();
         this.nameEl.val(currentCat.name);
-        this.urlEl.val(currentCat.imgSrc);
+        this.urlEl.val(currentCat.imgAttribution);
         this.clicksEl.val(currentCat.clickCount);
     },
+    _getFormValues: function() {
+        // object containing current values in the form 
+        return {
+            name: this.nameEl.val(),
+            imgAttribution: this.urlEl.val(),
+            clickCount: this.clicksEl.val()
+        }
+    },
     _setupListeners: function() {
-        this.openBtn.on('click', function() {
+        this.openBtn.on('click', function(e) {
             this.render();
+            this.formEl.show();
         }.bind(this));
 
-        this.saveBtn.click(function() {
-            adminController.save();
+        this.saveBtn.click(function(e) {
+            e.preventDefault();
+            mainController.updateCat(this._getFormValues());
             this.formEl.hide();
         }.bind(this));
 
-        this.cancelBtn.click(function() {
+        this.cancelBtn.click(function(e) {
+            e.preventDefault();
             this.formEl.hide();
         }.bind(this))
     }

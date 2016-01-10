@@ -1,6 +1,8 @@
 // VIEW LAYER CANNOT TOUCH MODEL DIRECTLY
-//
+
 var octopus = require('./controller');
+var events = require('./constants');
+var Emitter = require('./emitter');
 
 /* ======= View Layer ======= */
 
@@ -22,11 +24,17 @@ var catView = {
 
         // render this view (update the DOM elements with the right values)
         this.render();
+
+        // add listeners
+        Emitter.subscribe(events.CURRENT_CAT_SET, this, function() {
+            this.render();
+        });
     },
 
     render: function() {
         // update the DOM elements with values from the current cat
         var currentCat = octopus.getCurrentCat();
+        console.log("catView render!", currentCat);
         this.countElem.textContent = currentCat.clickCount;
         this.catNameElem.textContent = currentCat.name;
         this.catImageElem.src = currentCat.imgSrc;
@@ -66,9 +74,8 @@ var catListView = {
             //  without the IIFE, the 'cat' param will always be the MouseEvent
             elem.addEventListener('click', (function(catCopy, currentIdx) {
                 return function() {
-                    console.log("clicked cat in list! ", catCopy, currentIdx);
+                    // CURRENT_CAT_SET event gets triggered
                     octopus.setCurrentCat(catCopy, currentIdx);
-                    catView.render();
                 };
             })(cat, i));
 

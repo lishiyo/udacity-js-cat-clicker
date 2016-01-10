@@ -3,13 +3,15 @@
 
 var model = require('./data');
 
+/* ======= Main Controller ======= */
+
+var controller = require('./controller');
+
 /* ======= View Layer ======= */
 
 var views = require('./views');
-var catView = views.catView;
-var catListView = views.catListView;
 
-/* ======= ADMIN ======= */
+/* ======= ADMIN Module ======= */
 
 var admin = require('./admin');
 
@@ -19,12 +21,11 @@ var app = {
 
     init: function() {
         // set our current cat to the first one in the list
-        model.currentCat = model.cats[0];
+        controller.setCurrentCat(model.cats[0], 0);
 
         // tell our views to initialize and render
-        catListView.init();
-        catView.init();
-
+        views.catListView.init();
+        views.catView.init();
         admin.view.init();
     },
 

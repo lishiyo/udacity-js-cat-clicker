@@ -1,8 +1,10 @@
 /* ======= Model ======= */
 
 var model = require('./data');
+var events = require('./constants');
+var Emitter = require('./emitter');
 
-/* ======= Controller ======= */
+/* ======= Main Controller ======= */
 
 function MainController() {
     this.currentCatIdx = null;
@@ -22,7 +24,9 @@ MainController.prototype = {
     setCurrentCat: function(cat, catIdx) {
         model.currentCat = cat;
         this.currentCatIdx = catIdx;
-        console.log("setCurrentCat! ", cat, catIdx)
+
+        // emit event
+        Emitter.trigger(events.CURRENT_CAT_SET, []);
     },
 
     // increments the counter for the currently-selected cat
@@ -31,14 +35,21 @@ MainController.prototype = {
     },
 
     // update current cat with new properties
-    updateCat: function(newCatProps) {
-        var newCat = $.extend({}, model.currentCat, newCatProps);
-        console.log("updateCat!", newCat, newCatProps, this.currentCatIdx);
+    updateCat: function(newCatObj) {
+        var currentCat = this.getCurrentCat();
+        for (var key in newCatObj) {
+            if (currentCat.hasOwnProperty(key)) {
+                currentCat[key] = newCatObj[key];
+            }
+        }
+
+        console.log("updateCat! props, idx", newCatObj, this.currentCatIdx);
+        console.log("newCat updated in place", currentCat);
         // update currentCat
-        model.currentCat = newCat;
-        // update the model in the list
+        // model.currentCat = newCat;
+        // update the same cat in the list
         var cats = this.getCats();
-        cats[this.currentCatIdx] = newCat;
+        cats[this.currentCatIdx] = currentCat;
     }
 };
 
