@@ -9,9 +9,13 @@ var views = require('./views');
 var catView = views.catView;
 var catListView = views.catListView;
 
+/* ======= ADMIN ======= */
+
+var admin = require('./admin');
+
 /* ======= Octopus ======= */
 
-module.exports = {
+var app = {
 
     init: function() {
         // set our current cat to the first one in the list
@@ -20,9 +24,13 @@ module.exports = {
         // tell our views to initialize and render
         catListView.init();
         catView.init();
+
+        admin.view.init();
     },
 
 };
 
 // make it go!
 app.init();
+
+module.exports = app;

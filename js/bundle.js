@@ -1,7 +1,90 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var app = require('./app');
+var mainController = require('../controller');
 
-},{"./app":2}],2:[function(require,module,exports){
+function AdminController() {
+
+}
+
+AdminController.prototype = {
+    save: function() {
+        // get the current values in the form
+
+    }
+}
+},{"../controller":5}],2:[function(require,module,exports){
+var view = require('./view');
+
+module.exports = {
+    view: view
+}
+
+},{"./view":3}],3:[function(require,module,exports){
+/**
+ * ADMIN View Layer
+ */
+
+var mainController = require('../controller');
+var adminController = require('./controller');
+
+// Constructor with initial state
+function AdminView(options) {
+    var defaults = {};
+    var options = $.extend({}, defaults, (options || {}));
+
+    // BUTTONS
+    this.openBtn = $('button#admin-open');
+    this.cancelBtn = $('button#cancel');
+    this.saveBtn = $('button#save');
+
+    // FORM
+    this.formEl = $('form#admin');
+    this.nameEl = $('input#name');
+    this.urlEl = $('input#url');
+    this.clicksEl = $('input#click-count');
+}
+
+// instance methods
+AdminView.prototype = {
+    init: function() {
+        this.formEl.hide();
+        this._setupListeners();
+    },
+    render: function() {
+        this.formEl.show();
+        // populate with current cat data
+        var currentCat = mainController.getCurrentCat();
+        this.nameEl.val(currentCat.name);
+        this.urlEl.val(currentCat.imgSrc);
+        this.clicksEl.val(currentCat.clickCount);
+    },
+    _setupListeners: function() {
+        this.openBtn.on('click', function() {
+            this.render();
+        }.bind(this));
+
+        this.saveBtn.click(function() {
+            adminController.save();
+            this.formEl.hide();
+        }.bind(this));
+
+        this.cancelBtn.click(function() {
+            this.formEl.hide();
+        }.bind(this))
+    }
+}
+
+// Object.Create does NOT go through constructor
+// var adminView = Object.create(AdminView.prototype, {
+//     form: {
+//         value: $('form#admin')
+//     }
+// });
+
+var adminView = new AdminView();
+
+module.exports = adminView;
+
+},{"../controller":5,"./controller":1}],4:[function(require,module,exports){
 
 /* ======= Model ======= */
 
@@ -13,9 +96,13 @@ var views = require('./views');
 var catView = views.catView;
 var catListView = views.catListView;
 
+/* ======= ADMIN ======= */
+
+var admin = require('./admin');
+
 /* ======= Octopus ======= */
 
-module.exports = {
+var app = {
 
     init: function() {
         // set our current cat to the first one in the list
@@ -24,6 +111,8 @@ module.exports = {
         // tell our views to initialize and render
         catListView.init();
         catView.init();
+
+        admin.view.init();
     },
 
 };
@@ -31,14 +120,20 @@ module.exports = {
 // make it go!
 app.init();
 
-},{"./data":4,"./views":6}],3:[function(require,module,exports){
+module.exports = app;
+
+},{"./admin":2,"./data":6,"./views":8}],5:[function(require,module,exports){
 /* ======= Model ======= */
 
 var model = require('./data');
 
 /* ======= Controller ======= */
 
-var octopus = {
+function MainController() {
+    this.currentCatIdx = null;
+}
+
+MainController.prototype = {
 
     getCurrentCat: function() {
         return model.currentCat;
@@ -49,20 +144,35 @@ var octopus = {
     },
 
     // set the currently-selected cat to the object passed in
-    setCurrentCat: function(cat) {
+    setCurrentCat: function(cat, catIdx) {
         model.currentCat = cat;
+        this.currentCatIdx = catIdx;
+        console.log("setCurrentCat! ", cat, catIdx)
     },
 
     // increments the counter for the currently-selected cat
     incrementCounter: function() {
         model.currentCat.clickCount++;
-        // catView.render();
+    },
+
+    // update current cat with new properties
+    updateCat: function(newCatProps) {
+        var newCat = $.extend({}, model.currentCat, newCatProps);
+        console.log("updateCat!", newCat, newCatProps, this.currentCatIdx);
+        // update currentCat
+        model.currentCat = newCat;
+        // update the model in the list
+        var cats = this.getCats();
+        cats[this.currentCatIdx] = newCat;
     }
 };
 
-module.exports = octopus;
 
-},{"./data":4}],4:[function(require,module,exports){
+var mainController = new MainController();
+
+module.exports = mainController;
+
+},{"./data":6}],6:[function(require,module,exports){
 /* ======= Model ======= */
 
 var model = {
@@ -103,12 +213,12 @@ var model = {
 
 module.exports = model; // single item
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var controller = require('./controller');
 var app = require('./app');
 var admin = require('./admin');
 
-},{"./admin":1,"./app":2,"./controller":3}],6:[function(require,module,exports){
+},{"./admin":2,"./app":4,"./controller":5}],8:[function(require,module,exports){
 // VIEW LAYER CANNOT TOUCH MODEL DIRECTLY
 //
 var octopus = require('./controller');
@@ -175,13 +285,13 @@ var catListView = {
             // (this uses our closure-in-a-loop trick to connect the value
             //  of the cat variable to the click event function)
             //  without the IIFE, the 'cat' param will always be the MouseEvent
-            elem.addEventListener('click', (function(catCopy) {
+            elem.addEventListener('click', (function(catCopy, currentIdx) {
                 return function() {
-                    console.log("clicked cat in list! ", catCopy);
-                    octopus.setCurrentCat(catCopy);
+                    console.log("clicked cat in list! ", catCopy, currentIdx);
+                    octopus.setCurrentCat(catCopy, currentIdx);
                     catView.render();
                 };
-            })(cat));
+            })(cat, i));
 
             // finally, add the element to the list
             this.catListElem.appendChild(elem);
@@ -194,4 +304,4 @@ module.exports = {
     catListView: catListView
 };
 
-},{"./controller":3}]},{},[5])
+},{"./controller":5}]},{},[7])

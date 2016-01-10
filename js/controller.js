@@ -4,7 +4,11 @@ var model = require('./data');
 
 /* ======= Controller ======= */
 
-var octopus = {
+function MainController() {
+    this.currentCatIdx = null;
+}
+
+MainController.prototype = {
 
     getCurrentCat: function() {
         return model.currentCat;
@@ -15,15 +19,30 @@ var octopus = {
     },
 
     // set the currently-selected cat to the object passed in
-    setCurrentCat: function(cat) {
+    setCurrentCat: function(cat, catIdx) {
         model.currentCat = cat;
+        this.currentCatIdx = catIdx;
+        console.log("setCurrentCat! ", cat, catIdx)
     },
 
     // increments the counter for the currently-selected cat
     incrementCounter: function() {
         model.currentCat.clickCount++;
-        // catView.render();
+    },
+
+    // update current cat with new properties
+    updateCat: function(newCatProps) {
+        var newCat = $.extend({}, model.currentCat, newCatProps);
+        console.log("updateCat!", newCat, newCatProps, this.currentCatIdx);
+        // update currentCat
+        model.currentCat = newCat;
+        // update the model in the list
+        var cats = this.getCats();
+        cats[this.currentCatIdx] = newCat;
     }
 };
 
-module.exports = octopus;
+
+var mainController = new MainController();
+
+module.exports = mainController;

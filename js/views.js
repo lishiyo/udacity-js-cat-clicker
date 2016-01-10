@@ -64,13 +64,13 @@ var catListView = {
             // (this uses our closure-in-a-loop trick to connect the value
             //  of the cat variable to the click event function)
             //  without the IIFE, the 'cat' param will always be the MouseEvent
-            elem.addEventListener('click', (function(catCopy) {
+            elem.addEventListener('click', (function(catCopy, currentIdx) {
                 return function() {
-                    console.log("clicked cat in list! ", catCopy);
-                    octopus.setCurrentCat(catCopy);
+                    console.log("clicked cat in list! ", catCopy, currentIdx);
+                    octopus.setCurrentCat(catCopy, currentIdx);
                     catView.render();
                 };
-            })(cat));
+            })(cat, i));
 
             // finally, add the element to the list
             this.catListElem.appendChild(elem);
